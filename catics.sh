@@ -4,6 +4,19 @@
 # Creation date : 23/03/2020
 
 ## This Script is to be used on a bare new Debian Server installed from a template  in order to customize it
+
+
+# We let the user enter the new hostname for that debian
+
+echo -e "Please enter a new Hostname for that Debian:"
+
+read new_hostname
+# We search for every file in /etc/ that contains the actual name of the Debian, and we change the content of every file, specifically the part where the old name is and replace it with the new name
+  # the search is made through a grep that returns only the name of the file containing the actual hostname of the template, and for everyone of these file  we use SED to change the content we want inside the file
+grep -i -l $HOSTNAME /etc/* -R | while IFS= read -r file_content_to_change; do sed -i "s/${HOSTNAME}/${new_hostname}/g" "/etc/${file_content_to_change}"; done
+
+
+#We prepare the variables and go to the chapter where we customize
 inside_selected_interface=0
 echo -e "Hello, welcome to the after template installation customization script."
 echo -e "We will customize the IP Adress, and the Hostname of that server"

@@ -7,19 +7,33 @@
 
 
 # We let the user enter the new hostname for that debian
+echo -e "Hello, welcome to the after template installation customization script."
 
-echo -e "Please enter a new Hostname for that Debian:"
+echo -e "\n\n Please enter a new Hostname for that Debian:"
 
 read new_hostname
 # We search for every file in /etc/ that contains the actual name of the Debian, and we change the content of every file, specifically the part where the old name is and replace it with the new name
   # the search is made through a grep that returns only the name of the file containing the actual hostname of the template, and for everyone of these file  we use SED to change the content we want inside the file
-grep -i -l $HOSTNAME /etc/* -R | while IFS= read -r file_content_to_change; do sed -i "s/${HOSTNAME}/${new_hostname}/g" "/etc/${file_content_to_change}"; done
+
+  # we present the user the list of all the modifications that are about to happen if "y" or "Y" is entered.  Any other choice result in an exit code
+  echo -e "\n\n You are about to change the name of that server from ${HOSTNAME} to ${new_hostname}"
+  echo -e "Do you wish to continue? [Y/n]"
+
+  read continue_choice
+
+  # if the user entered the choice "y" or "Y"  corresponding to YEs, then we continue to the modifications inside the /etc/network/interfaces
+  if [[ "${continue_choice}" == *"y"* || "${continue_choice}" == *"Y"* ]]
+    then  grep -i -l $HOSTNAME /etc/* -R | while IFS= read -r file_content_to_change; do sed -i "s/${HOSTNAME}/${new_hostname}/g" "${file_content_to_change}"; done
+    # If the user entered any other choice than "y" or "Y" standing for YES   then  it means the user doesn't want to continue   so we end the script without making any modifications.
+    else  echo -e "We cannot continue if you refuse. Come back when ready. Bye."
+          exit 1
+  fi
 
 
 #We prepare the variables and go to the chapter where we customize
 inside_selected_interface=0
-echo -e "Hello, welcome to the after template installation customization script."
-echo -e "We will customize the IP Adress, and the Hostname of that server"
+interfaces='/etc/network/interfaces'
+echo -e "\n\n Now We will customize the IP Adress, and the Hostname of that server"
 
 
 # we retrieve the list of all the available IPV4 network interfaces
@@ -64,27 +78,28 @@ if [[ "${continue_choice}" == *"y"* || "${continue_choice}" == *"Y"* ]]
   # if the current read line is containing the syntaxe   'iface //name of the interface we selected//' then we know we are in the current block concerning the interface we are looking to customize and we pass the variable inside_selected_interface to 1 for further double checking before modification
           do  if [[ "${iface_file_line}" == *"iface ${selected_interface}"* ]]
                 then  inside_selected_interface=1
+                      echo "OK"
               fi
 
               # if the current read line is inside the block of the current interface we want to customize, and the line contains 'address',   then we are modifying the whole line with the new data
               if [[ "${iface_file_line}" == *"address "* && "${inside_selected_interface}" == "1" ]]
-                then  sed -i "s|${iface_file_line}|address ${new_ip_cidr}|g" interfaces
+                then  sed -i "s|${iface_file_line}|address ${new_ip_cidr}|g" "${interfaces}"
               fi
 
               # if the current read line is inside the block of the current interface we want to customize, and the line contains 'gateway',   then we are modifying the whole line with the new data
               if [[ "${iface_file_line}" == *"gateway "* && "${inside_selected_interface}" == "1" ]]
-              then  sed -i "s|${iface_file_line}|gateway ${new_gateway}|g" interfaces
+              then  sed -i "s|${iface_file_line}|gateway ${new_gateway}|g" "${interfaces}"
               fi
 
               # if the current read line is inside the block of the current interface we want to customize, and the line contains 'dns-nameservers',   then we are modifying the whole line with the new data
                 # Also we get the variable "inside_selected_interface"  because in a default /etc/network/interfaces file,  the last line of the block concerning each interface is ending with the field  "dns-nameservers"
                 # So we pass the variable "inside_selected_interface" to 0 to make sure the script doesn't modify any other line concerning any other interface
               if [[ "${iface_file_line}" == *"dns-nameservers "* && "${inside_selected_interface}" == "1" ]]
-                then  sed -i "s|${iface_file_line}|dns-nameservers ${dns_server}|g" interfaces
+                then  sed -i "s|${iface_file_line}|dns-nameservers ${dns_server}|g" "${interfaces}"
                       inside_selected_interface=0
               fi
         # we end the while read loop and precise the name of the file we want to modify
-        done < interfaces
+      done < "${interfaces}"
 
   # If the user entered any other choice than "y" or "Y" standing for YES   then  it means the user doesn't want to continue   so we end the script without making any modifications.
   else  echo -e "We cannot continue if you refuse. Come back when ready. Bye."

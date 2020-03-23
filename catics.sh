@@ -101,6 +101,8 @@ if [[ "${continue_choice}" == *"y"* || "${continue_choice}" == *"Y"* ]]
         # we end the while read loop and precise the name of the file we want to modify
       done < "${interfaces}"
 
+      ## We have to customize the IP in the /etc/hosts corresponding to the new ip and the new name of that server
+
   # If the user entered any other choice than "y" or "Y" standing for YES   then  it means the user doesn't want to continue   so we end the script without making any modifications.
   else  echo -e "We cannot continue if you refuse. Come back when ready. Bye."
         exit 1
